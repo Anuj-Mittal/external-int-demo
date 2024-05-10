@@ -11,17 +11,37 @@ export const Layout = () => {
   const ctiSprComponentRef = useRef();
   const guidedPathSprComponentRef = useRef();
 
-  // 7316716
   useEffect(() => {
     if (!sprComponentsMounted) {
       sprComponentsMounted = true;
+
+      window.spr.integrations.init({
+        getToken: () =>
+          fetch("/api/getOTA")
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then((data) => {
+              const { ota } = data;
+              return ota;
+            })
+            .catch((error) => {
+              console.error(
+                "There was a problem with the fetch operation:",
+                error
+              );
+            }),
+      });
 
       caseDetailSprComponentRef.current = window.spr.integrations.command(
         "MOUNT",
         {
           component: "CASE_DETAIL",
           container: document.getElementById("caseDetailContainer"),
-          props: { caseNumber: 7316716 },
+          props: { caseNumber: 864950, caseFilterKey: "caseNumbers" },
         }
       );
 
@@ -31,18 +51,16 @@ export const Layout = () => {
         props: { caseNumber: "" },
       });
 
-      // guidedPathSprComponentRef.current = window.spr.integrations.command(
-      //   "MOUNT",
-      //   {
-      //     component: "GUIDED_PATH",
-      //     container: document.getElementById("guidedPathContainer"),
-      //     props: {
-      //       actionDetails: {
-      //         action: 51563,
-      //       },
-      //     },
-      //   }
-      // );
+      guidedPathSprComponentRef.current = window.spr.integrations.command(
+        "MOUNT",
+        {
+          component: "GUIDED_WORKFLOW",
+          container: document.getElementById("guidedPathContainer"),
+          props: {
+            processDefinitionId: 574830,
+          },
+        }
+      );
     }
   }, []);
 
@@ -86,7 +104,10 @@ export const Layout = () => {
         <InputNumber
           addonBefore="Case Number"
           onChange={(caseNumber) => {
-            caseDetailSprComponentRef.current.update({ caseNumber });
+            caseDetailSprComponentRef.current.update({
+              caseNumber,
+              caseFilterKey: "caseNumbers",
+            });
           }}
         />
         <InputNumber
